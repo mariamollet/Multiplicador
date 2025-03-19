@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica de Tablas de Multiplicar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-blue-100 flex items-center justify-center min-h-screen">
+
+    <div id="juego" class="bg-white p-6 rounded-2xl shadow-xl text-center max-w-sm w-full">
+        <h1 class="text-2xl font-bold text-blue-600 mb-4">¡Practica las Tablas!</h1>
+        <p id="multiplicacion" class="text-3xl font-semibold text-gray-800 mb-4"></p>
+
+        <input id="respuesta" type="number" class="border-2 border-gray-300 p-2 rounded-lg w-full text-xl text-center" placeholder="Tu respuesta" disabled>
+        <button id="botonComprobar" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg text-xl hover:bg-blue-700 transition" disabled>
+            Comprobar
+        </button>
+
+        <p id="mensaje" class="mt-4 text-lg font-bold"></p>
+
+        <div class="flex justify-between mt-4 text-lg">
+            <p>✅ Aciertos: <span id="aciertos">0</span></p>
+            <p>❌ Fallos: <span id="fallos">0</span></p>
+        </div>
+
+        <div class="mt-4 text-lg font-semibold">
+            ⏳ Tiempo: <span id="tiempo">10</span>s | 🎯 Puntos: <span id="puntos">1000</span>
+        </div>
+    </div>
+
+    <div id="resultado-final" class="hidden bg-white p-6 rounded-2xl shadow-xl text-center max-w-sm w-full">
+        <h1 class="text-4xl font-bold text-green-600">¡Juego terminado!</h1>
+        <p class="text-2xl mt-4">Puntuación final: <span id="puntuacion-final" class="font-bold text-blue-700"></span></p>
+        <p class="text-lg mt-2">✅ Aciertos: <span id="aciertos-final"></span> | ❌ Fallos: <span id="fallos-final"></span></p>
+        <button onclick="reiniciarJuego()" class="mt-6 bg-green-500 text-white px-4 py-2 rounded-lg text-xl hover:bg-green-700 transition">
+            Jugar de nuevo
+        </button>
+    </div>
+
+    <script>
+        let num1, num2, aciertos = 0, fallos = 0, puntuacion = 0, totalPreguntas = 0;
+        let tiempoRestante, puntosPorPregunta, temporizador;
+        const tiempoMax = 10;
+        const puntosMax = 1000;
+        let esperandoSiguientePregunta = false;
+
+        function generarPregunta() {
+            if (totalPreguntas === 10) {
+                mostrarResultadoFinal();
+                return;
+            }
+
+            // Generar números aleatorios para la multiplicación
+            num1 = Math.floor(Math.random() * 10) + 1;
+            num2 = Math.floor(Math.random() * 10) + 1;
+            document.getElementById("multiplicacion").textContent = `${num1} × ${num2} = ?`;
+
+            // Restablecer elementos visuales
+            document.getElementById("mensaje").textContent = "";
+            document.getElementById("respuesta").value = "";
+            document.getElementById("respuesta").disabled = false;
+            document.getElementById("botonComprobar").disabled = false;
+            document.getElementById("respuesta").focus();
+
+            // Iniciar tiempo y puntuación
+            tiempoRestante = tiempoMax;
+            puntosPorPregunta = puntosMax;
+            actualizarTiempo();
+
+            // Detener cualquier temporizador previo
+            clearInterval(temporizador);
+
+            // Iniciar nuevo temporizador
+            temporizador = setInterval(() => {
+                if (tiempoRestante > 0) {
+                    tiempoRestante--;
+                    puntosPorPregunta -= 100;
+                    actualizarTiempo();
+                } else {
+                    clearInterval(temporizador);
+                    verificarRespuesta();
+                }
+            }, 1000);
+        }
+
+        function verificarRespuesta() {
+            if (esperandoSiguientePregunta) return; // Evita respuestas dobles
+
+            esperandoSiguientePregunta = true; // Bloquea respuestas hasta la siguiente pregunta
+            clearInterval(temporizador); // Detener el temporizador
+
+            let respuestaUsuario = parseInt(document.getElementById("respuesta").value);
+            let resultadoCorrecto = num1 * num2;
+            let mensaje = document.getElementById("mensaje");
+
+            document.getElementById("respuesta").disabled = true;
+            document.getElementById("botonComprobar").disabled = true;
+
+            if (respuestaUsuario === resultadoCorrecto) {
+                mensaje.textContent = `¡Correcto! 🎉 +${puntosPorPregunta} puntos`;
+                mensaje.className = "text-green-600 font-bold mt-4";
+                aciertos++;
+                puntuacion += puntosPorPregunta;
+            } else {
+                mensaje.textContent = `Incorrecto 😢 La respuesta era ${resultadoCorrecto}`;
+                mensaje.className = "text-red-600 font-bold mt-4";
+                fallos++;
+            }
+
+            totalPreguntas++;
+            document.getElementById("aciertos").textContent = aciertos;
+            document.getElementById("fallos").textContent = fallos;
+            document.getElementById("puntos").textContent = puntuacion;
+
+            // Espera 3 segundos antes de la siguiente pregunta
+            setTimeout(() => {
+                esperandoSiguientePregunta = false;
+                generarPregunta();
+            }, 3000);
+        }
+
+        function actualizarTiempo() {
+            document.getElementById("tiempo").textContent = tiempoRestante;
+            document.getElementById("puntos").textContent = Math.max(0, puntosPorPregunta);
+        }
+
+        function mostrarResultadoFinal() {
+            document.getElementById("juego").classList.add("hidden");
+            document.getElementById("resultado-final").classList.remove("hidden");
+
+            document.getElementById("puntuacion-final").textContent = puntuacion;
+            document.getElementById("aciertos-final").textContent = aciertos;
+            document.getElementById("fallos-final").textContent = fallos;
+        }
+
+        function reiniciarJuego() {
+            aciertos = 0;
+            fallos = 0;
+            puntuacion = 0;
+            totalPreguntas = 0;
+
+            document.getElementById("aciertos").textContent = "0";
+            document.getElementById("fallos").textContent = "0";
+            document.getElementById("puntos").textContent = "1000";
+
+            document.getElementById("juego").classList.remove("hidden");
+            document.getElementById("resultado-final").classList.add("hidden");
+
+            generarPregunta();
+        }
+
+        document.getElementById("botonComprobar").addEventListener("click", verificarRespuesta);
+        document.getElementById("respuesta").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                verificarRespuesta();
+            }
+        });
+
+        // Iniciar el juego con la primera pregunta
+        generarPregunta();
+    </script>
+
+</body>
+</html>
